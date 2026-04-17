@@ -1,0 +1,546 @@
+{
+  "info": {
+    "_postman_id": "2ca22d07-badb-495a-9a04-b72be8e6b45d",
+    "name": "Trello-API-Automation-Portfolio",
+    "description": "# 🚀 Trello API Automation Suite (CRUD Flow)\n\nEsta colección automatiza el ciclo de vida completo de un tablero y sus listas en Trello, validando la integridad de los datos y el cumplimiento de los contratos de la API.\n\n## 📋 Alcance de las Pruebas\n\nLa suite ejecuta un flujo lógico de principio a fin:\n\n1. **Creación:** Se genera un tablero nuevo y se captura su ID.\n    \n2. **Actualización:** Se modifica el nombre del tablero para validar persistencia.\n    \n3. **Dependencia:** Se crea una lista dentro del tablero usando variables de entorno.\n    \n4. **Verificación:** Se obtienen los datos y se valida que el esquema JSON sea el correcto.\n    \n5. **Limpieza (Cleanup):** Se elimina el tablero para mantener el ambiente libre de datos basura.\n    \n\n## 🛠️ Aspectos Técnicos Destacados\n\n- **Data Chaining:** Uso de variables de entorno para pasar IDs entre peticiones.\n    \n- **Validación de Esquema (JSON Schema):** Verificación técnica de los contratos de respuesta.\n    \n- **Tests de Regresión:** 17 pruebas automáticas que validan Status Codes, Tiempos de Respuesta y tipos de datos.\n    \n- **Idempotencia:** La suite es repetible y deja el ambiente limpio después de cada ejecución.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "34320451"
+  },
+  "item": [
+    {
+      "name": "Trello-API-Regression-Suite",
+      "item": [
+        {
+          "name": "01 -  Create Board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 1. Traducimos la respuesta del servidor (Texto -> Objeto JS)\r",
+                  "const respuesta = pm.response.json();\r",
+                  "\r",
+                  "// 2. Extraemos el ID del tablero y lo guardamos en una variable de ambiente\r",
+                  "// El primer parámetro es el nombre de la variable, el segundo es el valor.\r",
+                  "pm.environment.set(\"boardId\", respuesta.id);\r",
+                  "\r",
+                  "// 3. Verificamos que el servidor nos respondió con un 200 OK (Esto es el TEST real)\r",
+                  "pm.test(\"Status code es 200 - Tablero Creado\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "// 4. Verificamos que la respuesta realmente tenga un campo 'id'\r",
+                  "pm.test(\"La respuesta contiene un ID de tablero\", function () {\r",
+                  "    pm.expect(respuesta.id).to.be.a('string');\r",
+                  "});\r",
+                  "\r",
+                  "// VALIDACIÓN 1: Verificar que el nombre sea el correcto\r",
+                  "pm.test(\"El nombre del tablero es 'Mi_Tablero_Pro'\", function () {\r",
+                  "    // respuesta ya la definimos ayer con pm.response.json()\r",
+                  "    pm.expect(respuesta.name).to.eql(\"Mi Tablero Pro\");\r",
+                  "});\r",
+                  "\r",
+                  "//VALIDACIÓN de Tipo de Dato\r",
+                  "pm.test(\"El nombre es un formato de texto válido\", function () {\r",
+                  "    pm.expect(respuesta.name).to.be.a('string');\r",
+                  "});\r",
+                  "\r",
+                  "// VALIDACIÓN 2: Verificar que la API sea rápida (menos de 1500ms)\r",
+                  "pm.test(\"Tiempo de respuesta es menor a 1500ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1500);\r",
+                  "});\r",
+                  "\r",
+                  "// VALIDACIÓN DE ESTRUCTURA: Verificar que la respuesta sea un objeto\r",
+                  "pm.test(\"La respuesta es un objeto JSON válido\", function () {\r",
+                  "    pm.expect(respuesta).to.be.an('object');\r",
+                  "});\r",
+                  "\r",
+                  "// VALIDACIÓN DE PROPIEDADES CRÍTICAS: ¿Tiene lo mínimo necesario?\r",
+                  "pm.test(\"El objeto contiene los campos obligatorios (id, name, closed)\", function () {\r",
+                  "    pm.expect(respuesta).to.have.property('id');\r",
+                  "    pm.expect(respuesta).to.have.property('name');\r",
+                  "    pm.expect(respuesta).to.have.property('closed');\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/boards/?key={{apiKey}}&token={{apiToken}}&name=Portfolio Test Board",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "1",
+                "boards",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{apiKey}}"
+                },
+                {
+                  "key": "token",
+                  "value": "{{apiToken}}"
+                },
+                {
+                  "key": "name",
+                  "value": "Portfolio Test Board"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "02 - Update Board Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "pm.test(\"Status code es 200 - Actualización exitosa\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "pm.test(\"El nombre cambió correctamente\", function () {\r",
+                  "    const respuesta = pm.response.json();\r",
+                  "    pm.expect(respuesta.name).to.eql(\"Tablero Renombrado por QA\");\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\r\n  \"name\": \"Tablero Renombrado por QA\"\r\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/1/boards/{{boardId}}?key={{apiKey}}&token={{apiToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "1",
+                "boards",
+                "{{boardId}}"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{apiKey}}"
+                },
+                {
+                  "key": "token",
+                  "value": "{{apiToken}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03 - Create New List",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// --- TESTS DE VERIFICACIÓN (Técnicos) ---\r",
+                  "pm.test(\"Status code es 200 - OK\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "// 1. Convertimos el texto de la respuesta (JSON) en un objeto de JavaScript\r",
+                  "const respuesta = pm.response.json();\r",
+                  "\r",
+                  "pm.test(\"La respuesta es un objeto y tiene ID\", function () {\r",
+                  "    pm.expect(respuesta).to.be.an('object');\r",
+                  "    pm.expect(respuesta).to.have.property('id');\r",
+                  "});\r",
+                  "\r",
+                  "// --- TESTS DE VALIDACIÓN (De negocio/funcionales) ---\r",
+                  "pm.test(\"La lista se creó con el nombre esperado\", function () {\r",
+                  "    // Verificamos que no sea una lista vacía o con nombre erróneo\r",
+                  "    pm.expect(respuesta.name).to.be.a('string');\r",
+                  "    pm.expect(respuesta.name).to.not.be.empty;\r",
+                  "});\r",
+                  "\r",
+                  "// --- AUTOMATIZACIÓN\r",
+                  "// 2. Extraemos el ID de la lista y lo guardamos en una variable de ambiente\r",
+                  "// El primer parámetro es el nombre de la variable, el segundo es el valor.\r",
+                  "pm.environment.set(\"listId\", respuesta.id);\r",
+                  "\r",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/lists?key={{apiKey}}&token={{apiToken}}&name=Pendientes de QA&idBoard={{boardId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "1",
+                "lists"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{apiKey}}"
+                },
+                {
+                  "key": "token",
+                  "value": "{{apiToken}}"
+                },
+                {
+                  "key": "name",
+                  "value": "Pendientes de QA"
+                },
+                {
+                  "key": "idBoard",
+                  "value": "{{boardId}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "04 - Get Board Lists",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// Test de Status Code\r",
+                  "pm.test(\"Status code es 200 - Listas obtenidas\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "const respuesta = pm.response.json();\r",
+                  "\r",
+                  "// Validamos que al menos exista una lista (la que creamos recién)\r",
+                  "pm.test(\"El tablero tiene al menos una lista\", function () {\r",
+                  "    pm.expect(respuesta).to.be.an('array').and.not.be.empty;\r",
+                  "});\r",
+                  "\r",
+                  "// VALIDACIÓN DE ESQUEMA (El \"molde\" que vimos antes)\r",
+                  "const esquemaLista = {\r",
+                  "    \"type\": \"array\",\r",
+                  "    \"items\": {\r",
+                  "        \"type\": \"object\",\r",
+                  "        \"required\": [\"id\", \"name\", \"idBoard\"],\r",
+                  "        \"properties\": {\r",
+                  "            \"id\": { \"type\": \"string\" },\r",
+                  "            \"name\": { \"type\": \"string\" },\r",
+                  "            \"idBoard\": { \"type\": \"string\" }\r",
+                  "        }\r",
+                  "    }\r",
+                  "};\r",
+                  "\r",
+                  "pm.test(\"El esquema de las listas es válido\", function () {\r",
+                  "    pm.response.to.have.jsonSchema(esquemaLista);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/boards/{{boardId}}/lists?key={{apiKey}}&token={{apiToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "1",
+                "boards",
+                "{{boardId}}",
+                "lists"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{apiKey}}"
+                },
+                {
+                  "key": "token",
+                  "value": "{{apiToken}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "05 - Delete Board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// VALIDACIÓN 1: Status Code de borrado\r",
+                  "// Trello suele devolver 200 OK cuando borra un tablero exitosamente\r",
+                  "pm.test(\"Status code es 200 al borrar\", function () {\r",
+                  "    pm.response.to.have.status(200);\r",
+                  "});\r",
+                  "\r",
+                  "// VALIDACIÓN 2: Verificar la confirmación de Trello\r",
+                  "// Trello devuelve un objeto con { \"_value\": null } o similar al borrar\r",
+                  "pm.test(\"La respuesta confirma el borrado\", function () {\r",
+                  "    const respuesta = pm.response.json();\r",
+                  "    pm.expect(respuesta).to.have.property('_value');\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/boards/{{boardId}}?key={{apiKey}}&token={{apiToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "1",
+                "boards",
+                "{{boardId}}"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{apiKey}}"
+                },
+                {
+                  "key": "token",
+                  "value": "{{apiToken}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "description": "Esta carpeta contiene las 5 peticiones principales del flujo de regresión."
+    },
+    {
+      "name": "Negative Testing",
+      "item": [
+        {
+          "name": "ERR-01 - Create Board Missing Name",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 1. Validar que el Status Code sea 400\r",
+                  "pm.test(\"Status code es 400 Bad Request\", function () {\r",
+                  "    pm.response.to.have.status(400);\r",
+                  "});\r",
+                  "\r",
+                  "// 2. Validar que el cuerpo de la respuesta contenga el mensaje de error esperado\r",
+                  "pm.test(\"El mensaje de error es 'invalid value for name'\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"invalid value for name\");\r",
+                  "});\r",
+                  "\r",
+                  "// 3. Validar el tiempo de respuesta (siempre es bueno mantenerlo)\r",
+                  "pm.test(\"Tiempo de respuesta es menor a 1000ms\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1000);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/boards/?key={{apiKey}}&token={{apiToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "1",
+                "boards",
+                ""
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{apiKey}}"
+                },
+                {
+                  "key": "token",
+                  "value": "{{apiToken}}"
+                },
+                {
+                  "key": "name",
+                  "value": "Portfolio Test Board",
+                  "disabled": true
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "ERR-02 - Invalid Token Access",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 1. Validar el código de estado de seguridad\r",
+                  "pm.test(\"Status code es 401 Unauthorized\", function () {\r",
+                  "    pm.response.to.have.status(401);\r",
+                  "});\r",
+                  "\r",
+                  "// 2. Validar el mensaje de error en formato texto (Raw)\r",
+                  "pm.test(\"El cuerpo de respuesta contiene 'invalid app token'\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"invalid app token\");\r",
+                  "});\r",
+                  "\r",
+                  "// 3. Validar que la respuesta NO sea un JSON (Prueba de consistencia)\r",
+                  "pm.test(\"La respuesta no es un objeto JSON\", function () {\r",
+                  "    try {\r",
+                  "        pm.response.json();\r",
+                  "        // Si logra convertirlo a JSON, algo cambió, queremos que el test falle\r",
+                  "        pm.expect.fail(\"Se esperaba texto plano, pero se recibió un JSON\");\r",
+                  "    } catch (e) {\r",
+                  "        // Si da error al intentar parsear JSON, es que es texto plano. ¡Éxito!\r",
+                  "        pm.expect(true).to.be.true;\r",
+                  "    }\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/boards/{{boardId}}/lists?key={{apiKey}}&token=123456abc",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "1",
+                "boards",
+                "{{boardId}}",
+                "lists"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{apiKey}}"
+                },
+                {
+                  "key": "token",
+                  "value": "123456abc"
+                }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "03-ERR - Get Non-Existent Board",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "// 1. Validar que el recurso no existe\r",
+                  "pm.test(\"Status code es 404 Not Found\", function () {\r",
+                  "    pm.response.to.have.status(404);\r",
+                  "});\r",
+                  "\r",
+                  "// 2. Validar el mensaje de error específico de Trello\r",
+                  "pm.test(\"El mensaje confirma que el recurso no fue encontrado\", function () {\r",
+                  "    pm.expect(pm.response.text()).to.include(\"The requested resource was not found\");\r",
+                  "});\r",
+                  "\r",
+                  "// 3. Validar el tiempo de respuesta\r",
+                  "pm.test(\"Respuesta rápida (menor a 1000ms)\", function () {\r",
+                  "    pm.expect(pm.response.responseTime).to.be.below(1000);\r",
+                  "});"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/1/boards/66123abc456def7890123456/lists?key={{apiKey}}&token={{apiToken}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "1",
+                "boards",
+                "66123abc456def7890123456",
+                "lists"
+              ],
+              "query": [
+                {
+                  "key": "key",
+                  "value": "{{apiKey}}"
+                },
+                {
+                  "key": "token",
+                  "value": "{{apiToken}}"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
